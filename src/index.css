@@ -1,1 +1,11 @@
 @import "tailwindcss";
+
+/* Regla global para que todos los botones de la aplicación cambien el puntero al hacer hover */
+button {
+  cursor: pointer;
+}
+
+/* Regla para elementos con la clase cursor-pointer */
+.cursor-pointer {
+  cursor: pointer !important;
+}

@@ -62,7 +62,7 @@ export const ProductDetailPage: React.FC<Props> = ({ productId, onBack }) => {
         {/* Galería de Imágenes */}
         <div>
           <div className="h-96 w-full rounded-lg overflow-hidden border bg-stone-100 mb-4" style={{ borderColor: themeColors.border }}>
-            <img src={selectedImage} alt={product.nombre} className="w-full h-full object-cover" />
+            <img src={selectedImage} alt={product.nombre} className="w-full h-full object-contain" />
           </div>
 
           {fotosOrdenadas.length > 1 && (

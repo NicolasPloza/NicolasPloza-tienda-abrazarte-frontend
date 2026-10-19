@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { Usuario } from '../types';
 import { api } from '../services/api';
+import { SessionExpiredModal } from '../components/SessionExpiredModal';
 
 interface AuthContextType {
   usuario: Usuario | null;
@@ -33,13 +34,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(false);
   }, [token]);
 
+  // Estado para controlar la visibilidad del modal web de sesión expirada
+  const [sessionExpired, setSessionExpired] = useState(false);
+
   const login = async (email: string, password: string) => {
     const res = await api.post('/auth/login', { email, password });
     if (res.data.success) {
       const { token: nuevoToken, usuario: datosUsuario } = res.data.data;
       
       console.log(datosUsuario.rol);
-      
+
       // Asignar rol por defecto para la demo si la API no lo envía aún
       const usuarioConRol: Usuario = {
         ...datosUsuario,
@@ -53,6 +57,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       setToken(nuevoToken);
       setUsuario(usuarioConRol);
+      setSessionExpired(false);
     }
   };
 
@@ -84,9 +89,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUsuario(null);
   };
 
+  useEffect(() => {
+    const handleSesionExpirada = () => {
+      logout();
+      setSessionExpired(true); // Muestra el modal nativo de React en lugar del alert de la ventana
+    };
+
+    window.addEventListener('sesion-expirada', handleSesionExpirada);
+
+    return () => {
+      window.removeEventListener('sesion-expirada', handleSesionExpirada);
+    };
+  }, []);
+
+  const handleModalConfirm = () => {
+    setSessionExpired(false);
+    // Redirige al login usando el evento global de recarga o navegación
+    window.location.reload();
+  };
+
   return (
     <AuthContext.Provider value={{ usuario, token, login, logout, registrar, loading }}>
       {children}
+      <SessionExpiredModal
+        isOpen={sessionExpired}
+        onConfirm={handleModalConfirm}
+      />
     </AuthContext.Provider>
   );
 };

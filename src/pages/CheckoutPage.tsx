@@ -9,7 +9,7 @@ interface Props {
 }
 
 export const CheckoutPage: React.FC<Props> = ({ onOrderCompleted }) => {
-  const { cart, fetchCart } = useCart();
+  const { cart, resetCartSession } = useCart();
   const [formData, setFormData] = useState({
     nombreCliente: '',
     emailCliente: '',
@@ -27,7 +27,8 @@ export const CheckoutPage: React.FC<Props> = ({ onOrderCompleted }) => {
       const res = await api.post('/orders/checkout', formData);
       if (res.data.success) {
         setOrderSuccess(res.data.data);
-        await fetchCart(); // Limpiar el carrito en el estado
+        await resetCartSession();
+        //await fetchCart(); // Limpiar el carrito en el estado
       }
     } catch (err: any) {
       alert(err.response?.data?.message || 'Error al procesar la compra.');
@@ -77,7 +78,7 @@ export const CheckoutPage: React.FC<Props> = ({ onOrderCompleted }) => {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6" style={{ color: themeColors.secondary }}>
-        Finalizar Compra (Guest Checkout)
+        Finalizar Compra
       </h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -92,7 +93,7 @@ export const CheckoutPage: React.FC<Props> = ({ onOrderCompleted }) => {
               onChange={(e) => setFormData({ ...formData, nombreCliente: e.target.value })}
               className="w-full p-2.5 border rounded text-sm focus:outline-none"
               style={{ borderColor: themeColors.border }}
-              placeholder="Juan Pérez"
+              placeholder= "Nombre y apellido"
             />
           </div>
 
@@ -105,7 +106,7 @@ export const CheckoutPage: React.FC<Props> = ({ onOrderCompleted }) => {
               onChange={(e) => setFormData({ ...formData, emailCliente: e.target.value })}
               className="w-full p-2.5 border rounded text-sm focus:outline-none"
               style={{ borderColor: themeColors.border }}
-              placeholder="juan@example.com"
+              placeholder="mail@example.com"
             />
           </div>
 
@@ -131,7 +132,7 @@ export const CheckoutPage: React.FC<Props> = ({ onOrderCompleted }) => {
               onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
               className="w-full p-2.5 border rounded text-sm focus:outline-none"
               style={{ borderColor: themeColors.border }}
-              placeholder="Av. Corrientes 1234, CABA"
+              placeholder="Direccion"
             />
           </div>
 

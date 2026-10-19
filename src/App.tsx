@@ -1,5 +1,9 @@
 // src/App.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+
+// Tipos de datos e Integración con API
+import type { Producto } from './types';
+import { api } from './services/api';
 
 // Contextos de Estado Global
 import { AuthProvider } from './context/AuthContext';
@@ -27,9 +31,42 @@ export const AppContent: React.FC = () => {
   // Estado para la vista activa ('catalog' | 'detail' | 'checkout' | 'login' | 'admin')
   const [currentView, setCurrentView] = useState<string>('catalog');
   
+  // Estado para la lista global de productos obtenidos desde la API
+  const [products, setProducts] = useState<Producto[]>([]);
+  
   // Estado para filtros de categoría y selección de productos
   const [selectedCategoriaId, setSelectedCategoriaId] = useState<number | undefined>(undefined);
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
+
+  /**
+   * Carga inicial de productos desde la API REST
+   */
+  const fetchProducts = async () => {
+    try {
+      const res = await api.get('/products');
+      if (res.data.success) {
+        setProducts(res.data.data);
+      }
+    } catch (error) {
+      console.error('Error al descargar catálogo de productos:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  /**
+   * Función encargada de realizar el desplazamiento suave hacia la grilla de productos
+   */
+  const handleScrollToProducts = () => {
+    setTimeout(() => {
+      const seccionProductos = document.getElementById('catalogo-productos');
+      if (seccionProductos) {
+        seccionProductos.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 50);
+  };
 
   /**
    * Manejador para abrir la pantalla de detalle de un producto
@@ -40,12 +77,13 @@ export const AppContent: React.FC = () => {
   };
 
   /**
-   * Manejador para filtrar por categoría desde el Navbar
+   * Función que selecciona la categoría y desplaza suavemente la pantalla hacia el catálogo
    */
   const handleCategorySelect = (categoriaId?: number) => {
     setSelectedCategoriaId(categoriaId);
     setSelectedProductId(null);
     setCurrentView('catalog');
+    handleScrollToProducts();
   };
 
   return (
@@ -53,7 +91,7 @@ export const AppContent: React.FC = () => {
       className="min-h-screen flex flex-col font-sans selection:bg-fuchsia-200"
       style={{ backgroundColor: themeColors.background }}
     >
-      {/* Barra de Navegación Superior */}
+      {/* Barra de Navegación Superior Responsiva */}
       <Navbar
         currentView={currentView}
         setCurrentView={(view) => {
@@ -65,11 +103,13 @@ export const AppContent: React.FC = () => {
 
       {/* Contenido Principal Dinámico */}
       <main className="flex-1">
-        {/* 1. Vista de Catálogo Principal */}
+        {/* 1. Vista de Catálogo Principal con Props Completas */}
         {currentView === 'catalog' && (
           <CatalogPage
+            products={products}
             selectedCategoriaId={selectedCategoriaId}
             onSelectProduct={handleSelectProduct}
+            onScrollToProducts={handleScrollToProducts}
           />
         )}
 
@@ -83,7 +123,10 @@ export const AppContent: React.FC = () => {
 
         {/* 3. Vista de Checkout Guest */}
         {currentView === 'checkout' && (
-          <CheckoutPage onOrderCompleted={() => setCurrentView('catalog')} />
+          <CheckoutPage onOrderCompleted={() => {
+            fetchProducts(); // Refresca stock tras la compra
+            setCurrentView('catalog');
+          }} />
         )}
 
         {/* 4. Vista de Iniciar Sesión */}

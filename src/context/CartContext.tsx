@@ -9,6 +9,8 @@ interface CartContextType {
   setIsOpen: (open: boolean) => void;
   fetchCart: () => Promise<void>;
   addToCart: (productoId: number, cantidad: number) => Promise<void>;
+  removeFromCart: (itemId: number) => Promise<void>;
+  resetCartSession: () => Promise<void>;
   totalItems: number;
 }
 
@@ -39,6 +41,25 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Eliminar un ítem individual del carrito
+  const removeFromCart = async (itemId: number) => {
+    try {
+      await api.delete(`/cart/items/${itemId}`);
+      await fetchCart();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Error al eliminar el producto del carrito');
+    }
+  };
+
+  // Reiniciar la sesión del carrito (se invoca al cerrar sesión)
+  const resetCartSession = async () => {
+    // Generar un nuevo ID de sesión de invitado
+    const newSessionId = `guest-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`;
+    localStorage.setItem('x-session-id', newSessionId);
+    setCart(null);
+    //await fetchCart();
+  };
+
   useEffect(() => {
     fetchCart();
   }, []);
@@ -46,10 +67,21 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const totalItems = cart?.items.reduce((acc, item) => acc + item.cantidad, 0) || 0;
 
   return (
-    <CartContext.Provider value={{ cart, isOpen, setIsOpen, fetchCart, addToCart, totalItems }}>
-      {children}
-    </CartContext.Provider>
-  );
+        <CartContext.Provider
+        value={{
+            cart,
+            isOpen,
+            setIsOpen,
+            fetchCart,
+            addToCart,
+            removeFromCart,
+            resetCartSession,
+            totalItems,
+        }}
+        >
+            {children}
+        </CartContext.Provider>
+    );
 };
 
 export const useCart = () => {
